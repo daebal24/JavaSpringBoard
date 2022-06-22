@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="dao.NoticeDao">
+<!--  
+자동화
+1. mapper namespace 이름 : dao > NotcieDao.java 인터페이스와 이름을 동일하게 사용
+2. <select id="" 이름이  interface 가 정의하고 있는 함수명과 동일
+
+java 코드에서 mybatis 특정 함수를 인터페이스방식으로 호출 가능 
+
+    //게시물 개수
+	public int getCount(String field, String query) throws ClassNotFoundException, SQLException;
+	
+	//전체 게시물
+	public List<Notice> getNotices(int page, String field, String query) throws ClassNotFoundException, SQLException;
+	
+	//게시물 삭제
+	public int delete(String seq) throws ClassNotFoundException, SQLException;
+	
+	//게시물 수정
+	public int update(Notice notice) throws ClassNotFoundException, SQLException;
+	
+	//게시물 상세
+	public Notice getNotice(String seq) throws ClassNotFoundException, SQLException;
+	
+	//게시물 입력
+	public int insert(Notice n) throws ClassNotFoundException, SQLException;
+-->
+<!-- 
+public int getCount(String field, String query)
+1. parameter 1개 생략 or parameterType="자료형" 명시
+2. parameter DTO 객체 : parameterType="vo.Notice"  제일 편해요 (게시판 글쓰기 , 회원가입 , 수정 ...)
+3. parameter 2개 이상 (DTO 가 없는 경우)  >> 상세보기 , 회원정보 , 삭제하기 
+3.1 mybatis parameter  read 방법 : param1 , param2 , param3
+ex) int getCount(String field, String query) >> mapper >> param1 , param2 ....
+    parameter 1개  >> param1 이 불가능 (x)
+    
+3.2 param1 , param2  가독성 안좋고 유지 .....
+3.2 hashMap >> map.put(field,"title") , map.put(key1,value1) >> paramerType="Map"  >> ${field} ,, ${key1}     
+ -->
+
+<select id="getCount" resultType="int">
+	select count(*) as cnt
+	from notices
+	where ${param1} like '%${param2}%'
+</select>
+	
+<!--  
+List<Notice> getNotices(int page, String field, String query)
+
+1. hashMap
+2. param1 >> page , param2  >> field  , param3  >> query
+
+        [1][2][3][4][5][다음]
+     [이전][6][7][8][9][10][다음]
+     [이전][11][12]    
+      
+        page > 1번
+        int srow = 1 + (page-1)*5; // 1  6   11  16
+		int erow = 5 + (page-1)*5; // 5  10  15  20
+
+
+        st.setString(1, "%"+query+"%");  ?   >>> '%${param3}%'
+		st.setInt(2, srow);              ?   >>> 1 + (${param1}-1)*5
+		st.setInt(3, erow);              ?   >>> 5 + (${param1}-1)*5
+		
+		
+		Oracle 페이징 처리 (rownum , between A and B)
+		select *
+		from (
+        		select rownum as num, e.*
+        		from (
+                 				 select * from employees order by employee_id asc
+             		) e  where rownum <= 50
+              ) n where num >= 41;
+-->	
+<select id="getNotices" resultType="vo.Notice" >
+		SELECT * FROM
+				 (
+				     SELECT ROWNUM NUM, N.* 
+				     FROM (
+				              SELECT * FROM NOTICES WHERE ${param2} LIKE '%${param3}%' ORDER BY REGDATE DESC
+				          ) N
+				  ) WHERE NUM BETWEEN 1 + (${param1}-1)*5 AND 5 + (${param1}-1)*5
+</select>
+
+<!--  
+Notice getNotice(String seq)
+
+param1 은 안되요 (x)
+
+
+#{} 데이터 타입을 인정 >> 문자열 >> 문자     숫자 >> 숫자 
+where name = #{name}
+
+where name = '홍길동'
+
+where age = #{age}
+
+where age = 100
+
+컬럼명 , 테이블명 , LIKE 사용시에는   ${param3}
+LIKE '%${param3}%'   LIKE '%홍길동%'
+
+LIKE '%#{param3}%'   LIKE '%'홍길동'%'
+-->
+
+
+<!--  
+Notice getNotice(String seq)
+
+param1 은 안되요 (x)
+-->
+<select id="getNotice"  resultType="vo.Notice">
+	select seq, title , writer , content , regdate , hit , filesrc
+	from notices
+	where seq=#{seq}
+</select>	
+
+<!--  
+int delete(String seq)
+-->
+<delete id="delete" >
+	delete from notices where seq=#{seq}
+</delete>
+
+<!-- 
+int update(Notice notice)
+
+filesrc=#{fileSrc , jdbcType=VARCHAR}  값이 넘어오지 않으면
+
+파일 첨부를 하지 않으면      null 사용하겠다
+filesrc=#{fileSrc , jdbcType=VARCHAR}  >> filesrc=null 입력
+ -->	
+<update id="update" parameterType="vo.Notice">
+	update notices
+	set title = #{title} , content=#{content} , filesrc=#{fileSrc , jdbcType=VARCHAR}
+	where seq=#{seq}
+</update> 
+
+
+<!--
+int insert(Notice n)
+-->
+
+<!-- <insert id="insert" parameterType="vo.Notice">
+	INSERT INTO NOTICES(SEQ, TITLE, CONTENT, WRITER, REGDATE, HIT, FILESRC) 
+	VALUES( (SELECT MAX(TO_NUMBER(SEQ))+1 FROM NOTICES), #{title}, #{content}, 'kosauser', SYSDATE, 0, #{fileSrc})
+</insert> -->
+  
+  <insert id="insert" parameterType="vo.Notice">
+  	<selectKey order="BEFORE" keyProperty="seq" resultType="String">
+  		SELECT MAX(TO_NUMBER(SEQ))+1 FROM NOTICES
+  	</selectKey>
+  	INSERT INTO NOTICES(SEQ, TITLE, CONTENT, WRITER, REGDATE, HIT, FILESRC) 
+	VALUES( #{seq}, #{title}, #{content}, #{writer}, SYSDATE, 0, #{fileSrc})
+  </insert>
+</mapper>
+
+
+
+

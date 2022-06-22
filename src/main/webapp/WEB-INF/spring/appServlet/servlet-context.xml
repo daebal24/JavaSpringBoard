@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/mvc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+<!--  
+context:component-scan 엘리먼트 사용시
+  [클래스 상단]에
+  @Component  : 최상위
+  @Repository : DAO
+  @Service    : 업무 
+  @Controller : 요청 처리
+  @RestController  :  비동기 요청
+  [ 클래스는 자동으로 빈객체 생성 ] ....
+
+-->
+	
+	<context:annotation-config />
+	<context:component-scan base-package="ncontroller" />
+	<context:component-scan base-package="dao" />
+	<context:component-scan base-package="service" />
+</beans:beans>
