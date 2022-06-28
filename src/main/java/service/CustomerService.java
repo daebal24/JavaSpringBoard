@@ -158,8 +158,10 @@ public class CustomerService {
 	
 		
 		//글수정하기 서비스 (update ) 처리 
-		public String noticeEdit(Notice n , HttpServletRequest request) {
-			 
+		public String noticeEdit(Notice n , HttpServletRequest request)
+		{
+			String filename = "";
+			/*
 		    //파일 업로드 가능
 		    String filename =n.getFile().getOriginalFilename();
 			String path = request.getServletContext().getRealPath("/customer/upload"); //배포된 서버 경로 
@@ -181,6 +183,7 @@ public class CustomerService {
 					e.printStackTrace();
 				}
 			}
+			*/
 			//파일명 (DTO)
 			n.setFileSrc(filename);
 		
